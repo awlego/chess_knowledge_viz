@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Image Viewer</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="selection-form">
+        <!-- Block Selector -->
+        <div class="grid">
+          <div class="title">Block</div>
+          {% for block in range(1, 16) %}
+          <input type="radio" id="block{{ block }}" name="block" value="{{ block }}" class="grid-item" {% if block == 1 %}checked{% endif %}>
+          <label for="block{{ block }}" class="grid-label">{{ block }}</label>
+          {% endfor %}
+        </div>
+        <!-- Factor Selector -->
+        <div class="grid">
+          <div class="title">Factor</div>
+          {% for factor in range(1, 37) %}
+          <input type="radio" id="factor{{ factor }}" name="factor" value="{{ factor }}" class="grid-item" {% if factor == 1 %}checked{% endif %}>
+          <label for="factor{{ factor }}" class="grid-label">{{ factor }}</label>
+          {% endfor %}
+        </div>
+      </div>
+<div id="imagesContainer"></div>
+<script src="script.js"></script>
+</body>
+</html>
