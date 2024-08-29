@@ -13,7 +13,6 @@ def get_images():
     factor = request.args.get('factor')
     block = request.args.get('block')
     images = []
-    # Assuming your SVG files are stored in a directory named 'nmf_images'
     directory = os.path.join('nmf_images')
     for filename in os.listdir(directory):
         if f"factor{factor}" in filename and f"block_{block}" in filename:
@@ -22,7 +21,7 @@ def get_images():
     return {'images': images}
 
 @app.route('/nmf_images/<path:filename>')
-def send_svg(filename):
+def send_webp(filename):
     return send_from_directory('nmf_images', filename)
 
 if __name__ == '__main__':
