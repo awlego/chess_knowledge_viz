@@ -8,7 +8,7 @@ function fetchAndDisplayImages(factor, block) {
     for (let board = 0; board <50; board++) { 
         const imagePath = `board_${board}_layer_${block-1}_factor${factor}.webp`;
         const img = document.createElement('img');
-        img.src = `/nmf_images/${imagePath}`;
+        img.src = `nmf_images/${imagePath}`;
         img.classList.add('half-size'); // Add the class to each image
         imagesContainer.appendChild(img);
     }
