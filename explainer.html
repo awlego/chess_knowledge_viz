@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Exploring Non-Negative Matrix Factorization (NMF) in DeepMind's chess models for AI interpretability.">
+    <title>Unpacking the Chess Mind: How NMF Helps Decode AI Strategy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        header {
+            background: #0056b3;
+            color: #fff;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+        }
+        p {
+            margin-bottom: 1em;
+        }
+        .code-block {
+            background: #f4f4f4;
+            padding: 10px;
+            border-left: 4px solid #0056b3;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            margin-top: 20px;
+            background: #0056b3;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Unpacking the Chess Mind: How NMF Helps Decode AI Strategy</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Introduction: Why Interpret Chess Models?</h2>
+            <p>
+                How does a chess-playing AI "think"? This question has intrigued researchers and players alike. Understanding the inner workings of AI models isn't just fascinating—it’s crucial for building trust and improving strategies. 
+            </p>
+            <p>
+                Non-Negative Matrix Factorization (NMF) offers a powerful unsupervised method to uncover hidden patterns in a chess model’s reasoning. Unlike predefined probes, NMF allows the data to reveal its own structure, giving us a concept-agnostic lens into AI decision-making. In this blog post, we’ll explore how NMF is used in DeepMind's chess models, breaking down complex activations into digestible components.
+            </p>
+        </section>
+
+        <section>
+            <h2>Outline</h2>
+            <ol>
+                <li><strong>Introduction:</strong> The importance of interpreting chess models.</li>
+                <li><strong>What is NMF?</strong> Understanding the method through simple analogies.</li>
+                <li><strong>Chess-Specific Application:</strong> How activations correspond to the chessboard.</li>
+                <li><strong>Methodology Simplified:</strong> A step-by-step breakdown with visual aids.</li>
+                <li><strong>Why is This Useful?</strong> Visualizations and insights from NMF.</li>
+                <li><strong>Limitations and Open Questions:</strong> Challenges and future research directions.</li>
+                <li><strong>Interactive Visualizations:</strong> (Optional) How readers can interact with the data.</li>
+                <li><strong>Conclusion:</strong> Wrapping up with implications and opportunities.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>What is Non-Negative Matrix Factorization (NMF)?</h2>
+            <p>
+                At its core, Non-Negative Matrix Factorization (NMF) is a technique for breaking down data into simpler components. Imagine you have a set of complex recipes, and you want to discover the core ingredients that make them up—NMF helps you find those "ingredients" (factors) and their "proportions" (weights) without negative values.
+            </p>
+            <p>
+                This method is particularly useful in chess models because it allows us to compress and interpret activations (think of activations as the neural network's "thoughts") into understandable patterns. Unlike supervised methods that probe for specific concepts, NMF lets the data speak for itself, uncovering structure without bias.
+            </p>
+        </section>
+        <section>
+            <h2>Methodology Simplified</h2>
+            <p>
+                The chess model’s activations are shaped like an 8×8 board, with each square corresponding to a position on the board and holding a vector of activations. NMF compresses these activations into fewer, more interpretable factors. Below, we walk through the key steps, combining explanations, math, and code.
+            </p>
+        
+            <h3>Step 1: Reshaping the Activations</h3>
+            <p>
+                <strong>English:</strong> We reshape the 8×8×256 tensor into a matrix where each row represents a square on the chessboard, and each column corresponds to an activation channel.
+            </p>
+            <p>
+                <strong>Math Formula:</strong> Let \( z_l \in \mathbb{R}^{H \times W \times C} \) be the activations. Reshape \( z_l \) into \( \hat{z}_l \in \mathbb{R}^{HW \times C} \), where \( HW = 64 \) for an 8×8 board.
+            </p>
+            <div class="code-block">
+                <pre>
+        import numpy as np
+        
+        # Example tensor representing activations: 8x8x256
+        activations = np.random.rand(8, 8, 256)
+        
+        # Reshape to HW x C (64 x 256)
+        reshaped_activations = activations.reshape(-1, activations.shape[-1])
+        print("Reshaped activations shape:", reshaped_activations.shape)
+                </pre>
+            </div>
+        
+            <h3>Step 2: Applying NMF</h3>
+            <p>
+                <strong>English:</strong> We use NMF to decompose the matrix into weights (\( \Omega \)) and factors (\( F \)), where \( Z \approx \Omega F \).
+            </p>
+            <p>
+                <strong>Math Formula:</strong> 
+                \[
+                F^*, \Omega^* = \text{argmin}_{F, \Omega} \| Z - \Omega F \|_2^2 \quad \text{subject to } F \geq 0, \Omega \geq 0
+                \]
+            </p>
+            <div class="code-block">
+                <pre>
+        from sklearn.decomposition import NMF
+        
+        # Number of factors (K)
+        k = 36
+        
+        # Initialize and fit NMF
+        nmf = NMF(n_components=k, init='random', random_state=42)
+        weights = nmf.fit_transform(reshaped_activations)
+        factors = nmf.components_
+        
+        print("Weights shape:", weights.shape)
+        print("Factors shape:", factors.shape)
+                </pre>
+            </div>
+        
+            <h3>Step 3: Visualizing the Results</h3>
+            <p>
+                <strong>English:</strong> Reshape the weights (\( \Omega \)) to an 8×8 grid for each factor to visualize their contribution across the chessboard.
+            </p>
+            <div class="code-block">
+                <pre>
+        import matplotlib.pyplot as plt
+        
+        # Select a factor to visualize
+        factor_idx = 0
+        factor_contribution = weights[:, factor_idx].reshape(8, 8)
+        
+        # Plot the heatmap
+        plt.imshow(factor_contribution, cmap='viridis')
+        plt.colorbar(label='Contribution')
+        plt.title(f"Factor {factor_idx} Contribution")
+        plt.show()
+                </pre>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Methodology Simplified</h2>
+            <p>
+                The chess model’s activations are shaped like an 8×8 board, with each square corresponding to a position on the board and holding a vector of activations. To make sense of this, NMF compresses these activations into fewer, more interpretable factors. Here’s the step-by-step process:
+            </p>
+            <ol>
+                <li><strong>Reshaping the Activations:</strong> Each 8×8×256 layer of activations is flattened into a matrix where each row corresponds to a square on the board, and each column corresponds to an activation channel.</li>
+                <div class="image-container">
+                    <img src="images/reshape_activations.png" alt="Diagram of reshaping activations into a matrix">
+                    <p>Figure 1: Reshaping 8×8×256 activations into a position-by-channel matrix.</p>
+                </div>
+                <li><strong>Compressing the Data:</strong> NMF reduces the dimensionality by representing each square with a smaller set of non-negative weights (a K-dimensional vector).</li>
+                <div class="image-container">
+                    <img src="images/compress_activations.png" alt="Illustration of dimensionality reduction">
+                    <p>Figure 2: Compression using NMF to reduce 256 channels to K factors.</p>
+                </div>
+                <li><strong>Finding the Global Factors:</strong> These weights are combined with global factors to approximate the original activations as closely as possible.</li>
+                <div class="image-container">
+                    <img src="images/nmf_approximation.png" alt="Visualization of NMF approximation">
+                    <p>Figure 3: Approximation of activations using weights and factors (Z ≈ ΩF).</p>
+                </div>
+                <li><strong>Visualization:</strong> The global factors are reshaped and visualized to interpret the contribution of each factor to specific board positions.</li>
+                <div class="image-container">
+                    <img src="images/nmf_factors_visualization.png" alt="Example of NMF factors overlaid on a chessboard">
+                    <p>Figure 4: Visualization of NMF factors overlaid on the chessboard, highlighting key areas of influence.</p>
+                </div>
+            </ol>
+            <p>
+                Mathematically, this process can be represented as finding matrices \( \Omega \) (weights) and \( F \) (factors) that satisfy:
+            </p>
+            <div class="code-block">
+                Z ≈ ΩF <br>
+                where Z is the reshaped activations matrix, Ω contains the NMF weights, and F contains the global factors.
+            </div>
+            <p>
+                This process allows researchers to visualize patterns in the model's reasoning, shedding light on its strategies and thought processes.
+            </p>
+        </section>
+
+        <section>
+            <h2>Why is This Useful?</h2>
+            <p>
+                The visualizations generated by NMF provide valuable insights into the model’s strategic reasoning. For instance:
+            </p>
+            <ul>
+                <li>Factors might highlight the importance of specific squares, such as control over the center of the board.</li>
+                <li>Other factors could reveal positional features, such as pawn structures, piece threats, or endgame patterns.</li>
+            </ul>
+            <p>
+                These insights are not predefined by human intuition—they emerge directly from the activations, offering an unbiased glimpse into the network’s reasoning. By interpreting these factors, researchers can better understand how AI models approach the game and identify areas for further improvement or study.
+            </p>
+            <div class="image-container">
+                <img src="images/useful_visualizations.png" alt="Visualization of useful NMF factors in chess">
+                <p>Figure 5: Example of useful patterns revealed by NMF in chess AI models.</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Limitations and Open Questions</h2>
+            <p>
+                While NMF is a powerful tool, it has its limitations:
+            </p>
+            <ul>
+                <li><strong>Spatial Correspondence Assumption:</strong> The method assumes that the network activations align spatially with the chessboard. While the architecture biases towards this, it is not strictly enforced.</li>
+                <li><strong>Unexplained Factors:</strong> Many factors, especially in deeper layers of the model, remain challenging to interpret. This highlights the complexity of neural network activations.</li>
+                <li><strong>Dependence on K:</strong> The choice of K (number of factors) significantly impacts the results. A poor choice might obscure meaningful patterns or introduce noise.</li>
+            </ul>
+            <p>
+                These challenges point to exciting directions for future research, such as developing better methods for interpreting deeper layers or refining the spatial alignment assumptions.
+            </p>
+        </section>
+
+        <section>
+            <h2>Interactive Visualizations</h2>
+            <p>
+                To make these insights more accessible, consider building an interactive chessboard visualization. Users could:
+            </p>
+            <ul>
+                <li>Hover over squares to see the contributions of specific NMF factors.</li>
+                <li>Switch between layers to explore how strategies evolve as the game progresses.</li>
+                <li>Compare visualizations across different inputs, such as opening positions or endgames.</li>
+            </ul>
+            <p>
+                These tools could provide a hands-on way to explore the rich structure uncovered by NMF, making it easier for players and researchers to engage with the model’s reasoning.
+            </p>
+        </section>
+
+        <section>
+            <h2>Conclusion</h2>
+            <p>
+                Non-Negative Matrix Factorization offers a powerful way to interpret chess AI models by revealing hidden patterns in their activations. Unlike traditional probes, NMF provides a concept-agnostic method to uncover structure, giving us a clearer view of the network’s strategic reasoning.
+            </p>
+            <p>
+                While challenges remain—such as unexplained factors and assumptions about spatial alignment—the insights gained so far are invaluable. By continuing to refine these methods and exploring new approaches, we can deepen our understanding of AI models and their applications in games and beyond.
+            </p>
+            <p>
+                If this exploration piqued your interest, feel free to dive deeper into the full NMF dataset or experiment with the methodology on your own models. The journey to understand AI reasoning is just beginning!
+            </p>
+        </section>
+        
+    </main>
+    <footer>
+        <p>© 2024 Chess AI Insights</p>
+    </footer>
+</body>
+</html>
